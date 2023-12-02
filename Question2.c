@@ -45,7 +45,7 @@ int main() {
 
     while (1) {
         // Display the prompt
-        write(STDOUT_FILENO, "enseash % ", 12);
+        write(STDOUT_FILENO, "enseash % ", 11);
 
         // Read the user input
         if (read(STDIN_FILENO, input, sizeof(input)) == -1) {
