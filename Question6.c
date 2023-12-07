@@ -10,13 +10,6 @@
 
 #define BUFSIZE 1096
 
-// Function to display the welcome message and prompt
-void displayWelcomeMessage() {
-    char message[BUFSIZE] = "Welcome to the ENSEA Shell.\nTo exit, type 'exit'.\nenseash %\n";
-    write(STDOUT_FILENO, message, strlen(message));
-}
-
-
 void executeCommand(char* command) {
     struct timespec start, stop;
     double accum;
