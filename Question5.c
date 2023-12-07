@@ -4,13 +4,29 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <time.h>
+#include <linux/time.h>
+#include <bits/time.h>
 
 #define BUFSIZE 1096
 
+// Function to display the welcome message and prompt
+void displayWelcomeMessage() {
+    char message[BUFSIZE] = "Welcome to the ENSEA Shell.\nTo exit, type 'exit'.\nenseash %\n";
+    write(STDOUT_FILENO, message, strlen(message));
+}
 
-
-// Function to execute a simple command
+// Function to execute a simple command and measure execution time
 void executeCommand(char* command) {
+    struct timespec start, stop;
+    double accum;
+
+    // Record start time
+    if (clock_gettime(CLOCK_REALTIME, &start) == -1) {
+        perror("clock gettime");
+        exit(EXIT_FAILURE);
+    }
+
     // Create a child process
     pid_t pid = fork();
 
@@ -32,26 +48,45 @@ void executeCommand(char* command) {
         int status;
         waitpid(pid, &status, 0);
 
+        // Record end time
+        if (clock_gettime(CLOCK_REALTIME, &stop) == -1) {
+            perror("clock gettime");
+            exit(EXIT_FAILURE);
+        }
 
-        // Display the exit code or signal in the prompt
+        // Calculate and display execution time
+        accum = (stop.tv_sec - start.tv_sec) * 1000.0 + (double)(stop.tv_nsec - start.tv_nsec) / 1000000.0;
 
+        // Convert the execution time to a string
+        char timeStr[20]; // As 15 digits is enough for double
+        int timeLen = snprintf(timeStr, sizeof(timeStr), "%.2lfms", accum);
 
-         if (WIFEXITED(status)) {
+        // Check if the process exited normally
+        if (WIFEXITED(status)) {
             write(STDOUT_FILENO, "[exit:", 6);
             dprintf(STDOUT_FILENO, "%d", WEXITSTATUS(status));
+            write(STDOUT_FILENO, "|", 1);
+            write(STDOUT_FILENO, timeStr, timeLen);
             write(STDOUT_FILENO, "] % ", 4);
         } else if (WIFSIGNALED(status)) {
+            // Check if the process was terminated by a signal
             write(STDOUT_FILENO, "[sign:", 6);
             dprintf(STDOUT_FILENO, "%d", WTERMSIG(status));
+            write(STDOUT_FILENO, "|", 1);
+            write(STDOUT_FILENO, timeStr, timeLen);
             write(STDOUT_FILENO, "] % ", 4);
         }
-    }
+
+        }
+
+        
+        
+        
 }
 
 int main() {
     char input[BUFSIZE];
     int inputChar;
-
 
     // Display the welcome message
     displayWelcomeMessage();
@@ -77,7 +112,6 @@ int main() {
             write(STDOUT_FILENO, "Goodbye!\n", 9);
             break;
         }
-
 
         // Check if the user wants to exit
         if (strcmp(input, "exit") == 0) {
