@@ -1,14 +1,21 @@
+#define _STRUCT_TIMEVAL  // Évite la redéfinition de struct timeval
+#define _STRUCT_ITIMERSPEC  // Évite la redéfinition de struct itimerspec
+
 #include "shell.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
-#include <time.h>
+#include <fcntl.h>
 #include <bits/time.h>
 #include <linux/time.h>
 
+
+
 #define BUFSIZE 1096
+
+
 
 void executeCommand(char* command) {
     struct timespec start, stop;
@@ -41,11 +48,48 @@ void executeCommand(char* command) {
 
         args[i] = NULL;
 
-        // Execute the command with arguments
-        if (execvp(args[0], args) == -1) {
-            perror("Error executing command");
-            exit(EXIT_FAILURE);
+        // Check for redirection symbols '<' and '>'
+        int input_redirection = 0;
+        int output_redirection = 0;
+        char *input_file = NULL;
+        char *output_file = NULL;
+
+        for (int j = 0; j < i; j++) {
+            if (strcmp(args[j], "<") == 0) {
+                input_redirection = 1;
+                input_file = args[j + 1];
+                args[j] = NULL;  // Remove '<' from the arguments
+            } else if (strcmp(args[j], ">") == 0) {
+                output_redirection = 1;
+                output_file = args[j + 1];
+                args[j] = NULL;  // Remove '>' from the arguments
+            }
         }
+
+        // Execute the command with redirections
+        if (input_redirection) {
+            int fd = open(input_file, O_RDONLY);
+            if (fd == -1) {
+                perror("Error opening input file");
+                exit(EXIT_FAILURE);
+            }
+            dup2(fd, STDIN_FILENO);
+            close(fd);
+        }
+
+        if (output_redirection) {
+            int fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (fd == -1) {
+                perror("Error opening output file");
+                exit(EXIT_FAILURE);
+            }
+            dup2(fd, STDOUT_FILENO);
+            close(fd);
+        }
+
+        execvp(args[0], args);
+        perror("Error executing command");
+        exit(EXIT_FAILURE);
     } else {
         // This is the parent process
 
@@ -86,10 +130,9 @@ void executeCommand(char* command) {
 
 int main() {
     char input[BUFSIZE];
-    int inputChar;
 
     // Display the welcome message
-    write(STDOUT_FILENO, "Welcome to the ENSEA Shell.\nTo exit, type 'exit'.\nenseash %\n", 62);
+    displayWelcomeMessage();
 
     while (1) {
         // Display the prompt
@@ -103,15 +146,6 @@ int main() {
 
         // Remove the newline character (if it exists)
         input[strcspn(input, "\n")] = '\0';
-
-        // Read the user input character by character
-        inputChar = getchar();
-
-        // Check for Ctrl+d (EOF)
-        if (inputChar == EOF) {
-            write(STDOUT_FILENO, "Goodbye!\n", 9);
-            break;
-        }
 
         // Check if the user wants to exit
         if (strcmp(input, "exit") == 0) {
