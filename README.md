@@ -1,24 +1,61 @@
 # TP1_EnseaSH_NDOUR_BOUDISSA
- Réaliser un micro shell, affichant les codes de sortie et les temps d’exécution des programmes lancés.
 
-1/ Affichage d'un message d'accueil :
+## Introduction
+This project is a micro-shell, named EnseaSH, designed to provide users with a simple yet functional command-line interface. It displays the exit codes and execution times of the executed commands. This README provides an overview of the features, compilation instructions, and examples of usage.
 
-L'objectif de la première question est d'afficher un message d'accueil simple
+## Features
 
-2/ Exécution de la commande saisie
+### 1. Display Welcome Message and Prompt
+Upon launching, the shell displays a welcome message introducing users to the ENSEA Shell environment. A prompt (`enseash %`) is presented to accept user commands.
 
-Pour toute cette partie et le suite la lecture et l'exécution des commandes se fait dans une boucle infinie while(1){ }.
-Pour lire la commande saisie on utilise la ligne de commande suivante : 
-read(0,buf, BUFSIZE); L’argument 0 correspond à STDIN_FILENO.
-On veut exécuter les commandes de bases d’une console. 
-En se basant sur le cours, on utilise execlp, il n’est donc pas nécessaire d’indiquer le path entier du fichier à exécuter.
-Le caractère “enter” est pris en compte avec le read. Il faut donc le retirer pour ne pas fausser execlp.
-Pour cela on remplace ce terme par “\0” qui se trouve à la fin de chaque chaîne de caractères.
+### 2. Execution of Simple Commands
+Users can input and execute simple commands (commands without arguments). The shell then returns to the prompt for additional input.
 
-3/Retour au prompt et sortie enseahh
+### 3. Handling Shell Exit
+The shell gracefully handles the "exit" command, allowing users to terminate the shell. Additionally, it responds to the end of input file (`<ctrl>+d`) by displaying a goodbye message.
 
-Sortie avec exit : 
-On compare le texte en entrée à la chaîne de caractères “exit” en utilisant la fonction strcmp qui renvoie 0 si les deux chaînes de caractères sont identiques
-On ajoute l’exécution de la commande exit avant le pid = fork(), cela permet d'empêcher d’autre processus de se créer et d’être exécuté avant le “exit”.
-Sortie avec <ctrl>+d 
-<ctrl> + d envoie le message Bye Bye. Concrètement, il n’y a plus rien à lire et command_size est nul. Donc l’ajout de la condition “|| commande_size == 0” suffit à le faire fonctionner
+### 4. Displaying Exit Code (or Signal) of the Previous Command
+After executing each command, the shell displays the exit code or signal of the preceding command. This provides users with information about the success or failure of the executed command.
+
+### 5. Measurement of Command Execution Time
+The shell measures and displays the execution time of each command in milliseconds. This feature allows users to assess the performance of commands.
+
+### 6. Execution of Complex Commands with Arguments
+The shell supports the execution of complex commands with arguments. Users can input commands with multiple parameters, and the shell processes and executes them accordingly.
+
+### 7. Handling Redirections to stdin and stdout with ‘<’ and ‘>’
+EnseaSH supports input and output redirection using '<' and '>', enabling users to manage input/output streams for commands. This enhances the flexibility and functionality of the shell.
+
+## Compilation and Execution
+To compile and run EnseaSH, use the following commands:
+
+```bash
+gcc -o Question_i Question_i.c // i is the number of the Question
+./EnseaSH
+
+
+## Compilation and Execution
+Enter simple or complex commands.
+Use "exit" to exit the shell.
+Use < and > to manage redirections.
+
+## Examples of use
+enseash % ls
+[exit:0] % 
+enseash % pwd
+[exit:0] % 
+enseash % date
+[exit:0] % 
+enseash % date
+[exit:0] % ls -l
+enseash % ls > filelist.txt
+enseash [exit:0|1ms] % wc -l < filelist.txt
+44
+enseash [exit:0|4ms] % 
+
+## Notes
+Ensure proper error handling and resource management in your program. Feel free to continue enhancing and expanding features based on future needs.
+
+Author: Adem BOUDISSA & Ousseynou NDOUR
+
+Date: 12/08/2023
